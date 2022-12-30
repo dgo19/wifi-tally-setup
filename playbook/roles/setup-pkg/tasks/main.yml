@@ -1,0 +1,13 @@
+---
+- name: setup required packages
+  become: yes
+  become_user: root
+  apt:
+    force_apt_get: yes
+    pkg:
+    - git
+    - ansible
+    - cowsay
+    - npm
+    - unzip
+    - libasound2-dev

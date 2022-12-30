@@ -1,0 +1,6 @@
+---
+nodemcu_version: "3.2.1"
+vtally_version: "0.5.1"
+vtally_hub_user: "debadm"
+vtally_hub_group: "users"
+vtally_hub_user_home: "/home/debadm"

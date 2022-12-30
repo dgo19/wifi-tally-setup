@@ -1,0 +1,15 @@
+---
+- name: check if nodemcu-tool exists
+  stat:
+    path: "~/node_modules/nodemcu-tool/bin/nodemcu-tool.js"
+  register: nodemcu_bin
+- name: check version of nodemcu-tool
+  shell: "~/node_modules/nodemcu-tool/bin/nodemcu-tool.js -V"
+  register: nodemcu_bin_v
+  changed_when: 0
+  when: nodemcu_bin.stat.exists == true
+- name: install nodemcu-tool
+  command:
+    cmd: "npm install nodemcu-tool@{{ nodemcu_version }}"
+    chdir: "~"
+  when: (nodemcu_bin.stat.exists == false) or ((nodemcu_bin.stat.exists == true) and (nodemcu_bin_v.stdout != nodemcu_version))

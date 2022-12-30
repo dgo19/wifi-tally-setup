@@ -1,0 +1,68 @@
+---
+- name: create wifi-tally hub directory
+  file:
+    path: "~/vtally-hub"
+    state: directory
+- name: check if vtally-hub version already exists
+  stat:
+    path: "~/vtally-hub/wifi-tally-{{ vtally_version }}"
+  register: vtally_hub
+- name: create tempdir for download
+  tempfile:
+    state: directory
+    prefix: wifi-tally
+  register: tempdir
+  when: vtally_hub.stat.exists == false
+- block:
+  - name: download wifi-tally hub
+    get_url:
+      url: "https://github.com/wifi-tally/wifi-tally/archive/refs/tags/{{ vtally_version }}.zip"
+      dest: "{{ tempdir.path }}/vtally.zip"
+      mode: "0644"
+    when: vtally_hub.stat.exists == false
+  - name: unpack wifi tally
+    unarchive:
+      src: "{{ tempdir.path }}/vtally.zip"
+      dest: "~/vtally-hub"
+      creates: "~/vtally-hub/wifi-tally-{{ vtally_version }}"
+      remote_src: yes
+    when: vtally_hub.stat.exists == false
+  - name: build wifi-tally hub
+    command:
+      cmd: "npm install"
+      chdir: "~/vtally-hub/wifi-tally-{{ vtally_version }}/hub"
+  always:
+  - name: "remove tempdir"
+    file:
+      path: "{{ tempdir.path }}"
+      state: absent
+    when: tempdir.path is defined
+- name: create systemd unit files
+  become: yes
+  become_user: root
+  template:
+    src: "systemd.service.j2"
+    dest: "/etc/systemd/system/vtally-hub-{{ vtally_hub_component }}.service"
+    owner: "root"
+    group: "root"
+  loop:
+    - "frontend"
+    - "backend"
+  loop_control:
+    loop_var: vtally_hub_component
+  register: systemd_out
+- name: enable systemd vtally services
+  become: yes
+  become_user: root
+  systemd:
+    name: "vtally-hub-{{ vtally_hub_component }}.service"
+    state: restarted
+    enabled: yes
+    masked: no
+    daemon_reload: yes 
+  loop:
+    - "frontend"
+    - "backend"
+  loop_control:
+    loop_var: vtally_hub_component
+  when: systemd_out.changed == true

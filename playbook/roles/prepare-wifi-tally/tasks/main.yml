@@ -1,0 +1,37 @@
+---
+- name: create wifi-tally directory
+  file:
+    path: "~/vtally"
+    state: directory
+- name: create wifi-tally version directory
+  file:
+    path: "~/vtally/{{ vtally_version }}"
+    state: directory
+  register: vtally_v
+- debug:
+    var: vtally_v
+- name: create tempdir for download
+  tempfile:
+    state: directory
+    prefix: wifi-tally
+  register: tempdir
+  when: vtally_v.changed == true
+- block:
+  - name: download wifi-tally
+    get_url:
+      url: "https://github.com/wifi-tally/wifi-tally/releases/download/{{ vtally_version }}/vtally-{{ vtally_version }}-esp8266.zip"
+      dest: "{{ tempdir.path }}/vtally.zip"
+      mode: "0644"
+    when: vtally_v.changed == true
+  - name: unpack wifi tally
+    unarchive:
+      src: "{{ tempdir.path }}/vtally.zip"
+      dest: "~/vtally/{{ vtally_version }}"
+      remote_src: yes
+    when: vtally_v.changed == true
+  always:
+  - name: "remove tempdir"
+    file:
+      path: "{{ tempdir.path }}"
+      state: absent
+    when: tempdir.path is defined

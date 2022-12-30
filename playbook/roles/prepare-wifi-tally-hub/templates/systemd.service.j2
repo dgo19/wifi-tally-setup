@@ -1,0 +1,17 @@
+[Unit]
+Description=vtally {{ vtally_hub_component }}
+After=syslog.target network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+WorkingDirectory={{ vtally_hub_user_home }}/vtally-hub/wifi-tally-{{ vtally_version }}/hub/
+ExecStart=/usr/bin/npm run start:{{ vtally_hub_component }}
+Environment=
+User={{ vtally_hub_user }}
+Group={{ vtally_hub_group }}
+
+[Install]
+WantedBy=multi-user.target
